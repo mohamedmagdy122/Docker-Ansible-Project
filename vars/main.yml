@@ -1,0 +1,12 @@
+# vars/main.yml
+---
+DOCKER_USERNAME: "mohammedmagdy12" 
+
+images:
+  - name: "{{ DOCKER_USERNAME }}/frontend-react"
+    tag: "latest"
+    path: "./React-Frontend"
+
+  - name: "{{ DOCKER_USERNAME }}/backend-dotnet-api"
+    tag: "latest"
+    path: "./DotNet-Backend"

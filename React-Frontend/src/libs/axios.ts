@@ -1,7 +1,8 @@
 import axios from "axios";
 
 export const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  // Use the exact URL you verified in the browser
+  baseURL: "http://localhost:8080/api/Product", 
   headers: {
     "Content-Type": "application/json",
   },

@@ -1,0 +1,54 @@
+---
+- name: Deploy 3-Tier Application with Docker, Compose, and Ansible
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars_files:
+    - vars/main.yml
+
+  tasks:
+    - name: Decrypt secrets file and load variables
+      ansible.builtin.include_vars:
+        file: vars/secrets.yml
+        name: secrets_vars
+
+    - name: Verify Docker service is active
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Log in to Docker Hub
+      community.docker.docker_login:
+        username: "{{ DOCKER_USERNAME }}"
+        password: "{{ secrets_vars.DOCKER_PASSWORD }}"
+        state: present 
+
+    - name: Build and push all application images to Docker Hub
+      community.docker.docker_image:
+        build:
+          path: "{{ item.path }}"
+          pull: yes
+          nocache: yes  
+        name: "{{ item.name }}"
+        tag: "{{ item.tag }}"
+        push: yes
+        source: build
+      loop: "{{ images }}"
+      loop_control:
+        label: "{{ item.name }}:{{ item.tag }}"
+
+    - name: Create db_password.txt with variable content
+      ansible.builtin.copy:
+        dest: ./db_password.txt
+        content: "{{ secrets_vars.DB_PASSWORD }}"
+        mode: '0600' 
+
+    - name: Deploy the 3-Tier application using docker-compose
+      community.docker.docker_compose_v2:
+        project_src: .
+        state: present
+      environment:
+        DOCKER_USERNAME: "{{ DOCKER_USERNAME }}"
+        DB_PASSWORD: "{{ secrets_vars.DB_PASSWORD }}"

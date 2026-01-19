@@ -1,0 +1,49 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      # Uses the password from your .env file
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: myapp_db
+    networks:
+      - backend_network
+
+  backend:
+    # 🟦 Uses local folder to include your CORS fix in Program.cs
+    build: ./DotNet-Backend
+    container_name: dotnet_backend
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # 🟦 Forces the .NET app to listen on the port mapped in 'ports'
+      - ASPNETCORE_URLS=http://+:8080
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=myapp_db
+      - DB_USER=root
+      - DB_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    networks:
+      - backend_network
+      - frontend_network
+
+  frontend:
+    # 🟦 Uses local folder to include your Axios fix in axios.ts
+    build: ./React-Frontend
+    container_name: react_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - frontend_network
+
+networks:
+  backend_network:
+  frontend_network:

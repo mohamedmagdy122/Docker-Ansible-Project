@@ -9,7 +9,7 @@ export const useAddProduct = () => {
     try {
       const newProduct = await axiosInstance.post(Controller.PRODUCT, product);
       toast({
-        title: "Product added.",
+	title: "Product added.",
         description: "Product has been added successfully.",
         status: "success",
         duration: 1000,
@@ -20,7 +20,7 @@ export const useAddProduct = () => {
     } catch (error) {
       console.log(error);
       toast({
-        title: "Error adding product.",
+	title: "Error adding product.",
         description: "There was an error adding the product.",
         status: "error",
         duration: 5000,

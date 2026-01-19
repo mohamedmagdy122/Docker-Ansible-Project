@@ -11,7 +11,7 @@ export const useDeleteProduct = () => {
         `${Controller.PRODUCT}/${id}`
       );
       toast({
-        title: "Product deleted.",
+	title: "Product deleted.",
         description: "Product has been deleted successfully.",
         status: "success",
         duration: 1000,
@@ -22,7 +22,7 @@ export const useDeleteProduct = () => {
     } catch (error) {
       console.log(error);
       toast({
-        title: "Error deleted product.",
+	title: "Error deleted product.",
         description: "There was an error deleted the product.",
         status: "error",
         duration: 5000,

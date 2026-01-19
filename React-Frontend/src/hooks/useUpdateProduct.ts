@@ -12,7 +12,7 @@ export const useUpdateProduct = () => {
         product
       );
       toast({
-        title: "Product updated.",
+	title: "Product updated.",
         description: "Product has been updated successfully.",
         status: "success",
         duration: 1000,
@@ -23,7 +23,7 @@ export const useUpdateProduct = () => {
     } catch (error) {
       console.log(error);
       toast({
-        title: "Error updated product.",
+	title: "Error updated product.",
         description: "There was an error updated the product.",
         status: "error",
         duration: 5000,
