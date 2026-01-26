@@ -1,0 +1,17 @@
+name: Self-Hosted Deployment
+on:
+  push:
+    branches: [ main ]  # Runs every time you push to main
+
+jobs:
+  deploy:
+    runs-on: self-hosted  # <--- This targets your CentOS VM
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy with Docker Compose
+        run: |
+          # Go to your project folder and restart containers
+          docker compose down
+          docker compose up -d --build
