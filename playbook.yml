@@ -4,13 +4,6 @@
   connection: local
   gather_facts: no
   tasks:
-    - name: Verify Docker service is active
-      ansible.builtin.service:
-        name: docker
-        state: started
-        enabled: yes
-      become: yes
-
     - name: Log in to GHCR
       community.docker.docker_login:
         registry: ghcr.io
