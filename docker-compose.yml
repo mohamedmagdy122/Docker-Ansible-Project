@@ -1,5 +1,4 @@
-services:
-  db:
+db:
     image: mysql:8.0
     container_name: mysql_db
     restart: always
@@ -8,13 +7,12 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
     networks:
       - backend_network
-
   backend:
     image: ghcr.io/${GITHUB_ACTOR}/dotnet-backend:latest
     container_name: dotnet_backend
     restart: always
     ports:
-      - "8080:8080"
+      - "5000:8080"
     depends_on:
       - db
     environment:
@@ -39,7 +37,6 @@ services:
       - backend
     networks:
       - frontend_network
-
 networks:
   backend_network:
   frontend_network:
