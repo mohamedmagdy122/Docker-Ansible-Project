@@ -1,0 +1,146 @@
+name: CI-CD-Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+        - dev
+        - staging
+        - production
+
+permissions:
+  contents: read
+  security-events: write
+  packages: write
+
+jobs:
+  dotnet-ci:
+    uses: mohamedmagdy122/centralized-automation-repo/.github/workflows/dotnet.yml@main
+    with:
+      dotnet-version: '8.0'
+      project-path: './backend'
+    secrets: inherit
+
+  react-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+
+    - name: Install Dependencies
+      working-directory: frontend
+      run: npm ci
+
+    - name: Build React
+      working-directory: frontend
+      run: npm run build
+
+    - name: GitLeaks Scanning
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: react-frontend
+
+    - name: Build and Push React Image
+      uses: mohamedmagdy122/centralized-automation-repo/.github/actions/react-docker-s2i@main
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        image-name: ${{ github.repository_owner }}/react-frontend
+
+    - name: Trivy Image Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ghcr.io/${{ github.repository_owner }}/react-frontend:latest
+        format: sarif
+        output: trivy-react.sarif
+
+    - name: Upload Trivy SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-react.sarif
+        category: trivy-react
+
+  deploy-dev:
+    name: Deploy to Dev
+    runs-on: [self-hosted, linux]
+    needs: [dotnet-ci, react-ci]
+    if: ${{ inputs.environment == 'dev' }}
+    environment: dev
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run Ansible Playbook
+      run: |
+        ansible-playbook playbook.yml \
+          -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
+          -e "GITHUB_ACTOR=${{ github.actor }}" \
+          -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          -e "DB_HOST=${{ vars.DB_HOST }}" \
+          -e "DB_PORT=${{ vars.DB_PORT }}" \
+          -e "DB_NAME=${{ vars.DB_NAME }}" \
+          -e "DB_USER=${{ vars.DB_USER }}"
+
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: [self-hosted, linux]
+    needs: [dotnet-ci, react-ci]
+    if: ${{ inputs.environment == 'staging' }}
+    environment: staging
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run Ansible Playbook
+      run: |
+        ansible-playbook playbook.yml \
+          -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
+          -e "GITHUB_ACTOR=${{ github.actor }}" \
+          -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          -e "DB_HOST=${{ vars.DB_HOST }}" \
+          -e "DB_PORT=${{ vars.DB_PORT }}" \
+          -e "DB_NAME=${{ vars.DB_NAME }}" \
+          -e "DB_USER=${{ vars.DB_USER }}"
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: [self-hosted, linux]
+    needs: [dotnet-ci, react-ci]
+    if: ${{ inputs.environment == 'production' }}
+    environment: production
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Run Ansible Playbook
+      run: |
+        ansible-playbook playbook.yml \
+          -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
+          -e "GITHUB_ACTOR=${{ github.actor }}" \
+          -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
+          -e "DB_HOST=${{ vars.DB_HOST }}" \
+          -e "DB_PORT=${{ vars.DB_PORT }}" \
+          -e "DB_NAME=${{ vars.DB_NAME }}" \
+          -e "DB_USER=${{ vars.DB_USER }}"

@@ -1,54 +1,32 @@
 ---
-- name: Deploy 3-Tier Application with Docker, Compose, and Ansible
+- name: Deploy 3-Tier Application
   hosts: localhost
   connection: local
   gather_facts: no
-
-  vars_files:
-    - vars/main.yml
-
   tasks:
-    - name: Decrypt secrets file and load variables
-      ansible.builtin.include_vars:
-        file: vars/secrets.yml
-        name: secrets_vars
-
     - name: Verify Docker service is active
       ansible.builtin.service:
         name: docker
         state: started
         enabled: yes
+      become: yes
 
-    - name: Log in to Docker Hub
+    - name: Log in to GHCR
       community.docker.docker_login:
-        username: "{{ DOCKER_USERNAME }}"
-        password: "{{ secrets_vars.DOCKER_PASSWORD }}"
-        state: present 
+        registry: ghcr.io
+        username: "{{ GITHUB_ACTOR }}"
+        password: "{{ GITHUB_TOKEN }}"
+        state: present
 
-    - name: Build and push all application images to Docker Hub
-      community.docker.docker_image:
-        build:
-          path: "{{ item.path }}"
-          pull: yes
-          nocache: yes  
-        name: "{{ item.name }}"
-        tag: "{{ item.tag }}"
-        push: yes
-        source: build
-      loop: "{{ images }}"
-      loop_control:
-        label: "{{ item.name }}:{{ item.tag }}"
-
-    - name: Create db_password.txt with variable content
-      ansible.builtin.copy:
-        dest: ./db_password.txt
-        content: "{{ secrets_vars.DB_PASSWORD }}"
-        mode: '0600' 
-
-    - name: Deploy the 3-Tier application using docker-compose
+    - name: Deploy the application using docker-compose
       community.docker.docker_compose_v2:
         project_src: .
         state: present
+        pull: always
       environment:
-        DOCKER_USERNAME: "{{ DOCKER_USERNAME }}"
-        DB_PASSWORD: "{{ secrets_vars.DB_PASSWORD }}"
+        MYSQL_ROOT_PASSWORD: "{{ MYSQL_ROOT_PASSWORD }}"
+        DB_HOST: "{{ DB_HOST }}"
+        DB_PORT: "{{ DB_PORT }}"
+        DB_NAME: "{{ DB_NAME }}"
+        DB_USER: "{{ DB_USER }}"
+        GITHUB_ACTOR: "{{ GITHUB_ACTOR }}"
