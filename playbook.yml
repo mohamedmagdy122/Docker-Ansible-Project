@@ -21,6 +21,8 @@
           DB_NAME={{ DB_NAME }}
           DB_USER={{ DB_USER }}
           GITHUB_ACTOR={{ GITHUB_ACTOR }}
+          FRONTEND_PORT={{ FRONTEND_PORT }}
+          BACKEND_PORT={{ BACKEND_PORT }}
         mode: '0600'
 
     - name: Deploy the application using docker-compose
