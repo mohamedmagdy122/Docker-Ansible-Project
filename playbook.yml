@@ -11,15 +11,20 @@
         password: "{{ GITHUB_TOKEN }}"
         state: present
 
+    - name: Create .env file
+      ansible.builtin.copy:
+        dest: ./.env
+        content: |
+          MYSQL_ROOT_PASSWORD={{ MYSQL_ROOT_PASSWORD }}
+          DB_HOST={{ DB_HOST }}
+          DB_PORT={{ DB_PORT }}
+          DB_NAME={{ DB_NAME }}
+          DB_USER={{ DB_USER }}
+          GITHUB_ACTOR={{ GITHUB_ACTOR }}
+        mode: '0600'
+
     - name: Deploy the application using docker-compose
       community.docker.docker_compose_v2:
         project_src: .
         state: present
         pull: always
-      environment:
-        MYSQL_ROOT_PASSWORD: "{{ MYSQL_ROOT_PASSWORD }}"
-        DB_HOST: "{{ DB_HOST }}"
-        DB_PORT: "{{ DB_PORT }}"
-        DB_NAME: "{{ DB_NAME }}"
-        DB_USER: "{{ DB_USER }}"
-        GITHUB_ACTOR: "{{ GITHUB_ACTOR }}"
