@@ -95,6 +95,7 @@ jobs:
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
+          -e "ENV_NAME=dev" \
           -e "FRONTEND_PORT=8080" \
           -e "BACKEND_PORT=5000" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
@@ -118,6 +119,7 @@ jobs:
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
+          -e "ENV_NAME=staging" \
           -e "FRONTEND_PORT=8081" \
           -e "BACKEND_PORT=5001" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
@@ -141,6 +143,7 @@ jobs:
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
+          -e "ENV_NAME=production" \
           -e "FRONTEND_PORT=8082" \
           -e "BACKEND_PORT=5002" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \

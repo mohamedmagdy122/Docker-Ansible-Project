@@ -1,7 +1,7 @@
 services:
   db:
     image: mysql:8.0
-    container_name: mysql_db
+    container_name: mysql_db_${ENV_NAME}
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -11,7 +11,7 @@ services:
 
   backend:
     image: ghcr.io/${GITHUB_ACTOR}/dotnet-backend:latest
-    container_name: dotnet_backend
+    container_name: dotnet_backend_${ENV_NAME}
     restart: always
     ports:
       - "${BACKEND_PORT:-5000}:8080"
@@ -31,7 +31,7 @@ services:
 
   frontend:
     image: ghcr.io/${GITHUB_ACTOR}/react-frontend:latest
-    container_name: react_frontend
+    container_name: react_frontend_${ENV_NAME}
     restart: always
     ports:
       - "${FRONTEND_PORT:-8080}:80"
