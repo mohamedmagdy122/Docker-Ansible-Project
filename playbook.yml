@@ -4,6 +4,13 @@
   connection: local
   gather_facts: no
   tasks:
+    - name: Log in to GHCR
+      community.docker.docker_login:
+        registry: ghcr.io
+        username: "{{ GITHUB_ACTOR }}"
+        password: "{{ GITHUB_TOKEN }}"
+        state: present
+
     - name: Create .env file
       ansible.builtin.copy:
         dest: ./.env
@@ -22,5 +29,6 @@
     - name: Deploy the application using docker-compose
       community.docker.docker_compose_v2:
         project_src: .
+        project_name: "{{ ENV_NAME }}"
         state: present
         pull: always
