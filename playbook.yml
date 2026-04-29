@@ -21,16 +21,13 @@
           DB_NAME={{ DB_NAME }}
           DB_USER={{ DB_USER }}
           GITHUB_ACTOR={{ GITHUB_ACTOR }}
+          ENV_NAME={{ ENV_NAME }}
           FRONTEND_PORT={{ FRONTEND_PORT }}
           BACKEND_PORT={{ BACKEND_PORT }}
-          ENV_NAME={{ ENV_NAME }}
         mode: '0600'
 
     - name: Deploy the application using docker-compose
       community.docker.docker_compose_v2:
         project_src: .
-        project_name: "{{ ENV_NAME }}"
         state: present
         pull: always
-
-

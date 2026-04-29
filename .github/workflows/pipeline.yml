@@ -30,32 +30,74 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '18'
         cache: 'npm'
         cache-dependency-path: React-Frontend/package-lock.json
-
     - name: Install Dependencies
       working-directory: React-Frontend
       run: npm ci
-
     - name: Build React
       working-directory: React-Frontend
       run: npm run build
-
     - name: GitLeaks Scanning
       uses: gitleaks/gitleaks-action@v2
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: javascript
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: react-frontend
+    - name: Build and Push React Image
+      uses: mohamedmagdy122/centralized-automation-repo/.github/actions/react-docker-s2i@main
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        image-name: ${{ github.repository_owner }}/react-frontend
+    - name: Trivy Image Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ghcr.io/${{ github.repository_owner }}/react-frontend:latest
+        format: sarif
+        output: trivy-react.sarif
+    - name: Upload Trivy SARIF
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: trivy-react.sarif
+        category: trivy-react
 
+  react-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: React-Frontend/package-lock.json
+    - name: Install Dependencies
+      working-directory: React-Frontend
+      run: npm ci
+    - name: Build React
+      working-directory: React-Frontend
+      run: npm run build
+    - name: GitLeaks Scanning
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: javascript
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3
       with:
@@ -68,14 +110,12 @@ jobs:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
         image-name: ${{ github.repository_owner }}/react-frontend
-
     - name: Trivy Image Scan
       uses: aquasecurity/trivy-action@master
       with:
         image-ref: ghcr.io/${{ github.repository_owner }}/react-frontend:latest
         format: sarif
         output: trivy-react.sarif
-
     - name: Upload Trivy SARIF
       uses: github/codeql-action/upload-sarif@v3
       with:
@@ -91,20 +131,19 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
-          -e "ENV_NAME=dev" \
-          -e "FRONTEND_PORT=8080" \
-          -e "BACKEND_PORT=5000" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
           -e "GITHUB_ACTOR=${{ github.actor }}" \
           -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           -e "DB_HOST=${{ vars.DB_HOST }}" \
           -e "DB_PORT=${{ vars.DB_PORT }}" \
           -e "DB_NAME=${{ vars.DB_NAME }}" \
-          -e "DB_USER=${{ vars.DB_USER }}"
+          -e "DB_USER=${{ vars.DB_USER }}" \
+          -e "ENV_NAME=dev" \
+          -e "FRONTEND_PORT=8080" \
+          -e "BACKEND_PORT=5000"
 
   deploy-staging:
     name: Deploy to Staging
@@ -115,20 +154,19 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
-          -e "ENV_NAME=staging" \
-          -e "FRONTEND_PORT=8081" \
-          -e "BACKEND_PORT=5001" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
           -e "GITHUB_ACTOR=${{ github.actor }}" \
           -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           -e "DB_HOST=${{ vars.DB_HOST }}" \
           -e "DB_PORT=${{ vars.DB_PORT }}" \
           -e "DB_NAME=${{ vars.DB_NAME }}" \
-          -e "DB_USER=${{ vars.DB_USER }}"
+          -e "DB_USER=${{ vars.DB_USER }}" \
+          -e "ENV_NAME=staging" \
+          -e "FRONTEND_PORT=8081" \
+          -e "BACKEND_PORT=5001"
 
   deploy-production:
     name: Deploy to Production
@@ -139,17 +177,16 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-
     - name: Run Ansible Playbook
       run: |
         ansible-playbook playbook.yml \
-          -e "ENV_NAME=production" \
-          -e "FRONTEND_PORT=8082" \
-          -e "BACKEND_PORT=5002" \
           -e "GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}" \
           -e "GITHUB_ACTOR=${{ github.actor }}" \
           -e "MYSQL_ROOT_PASSWORD=${{ secrets.MYSQL_ROOT_PASSWORD }}" \
           -e "DB_HOST=${{ vars.DB_HOST }}" \
           -e "DB_PORT=${{ vars.DB_PORT }}" \
           -e "DB_NAME=${{ vars.DB_NAME }}" \
-          -e "DB_USER=${{ vars.DB_USER }}"
+          -e "DB_USER=${{ vars.DB_USER }}" \
+          -e "ENV_NAME=production" \
+          -e "FRONTEND_PORT=8082" \
+          -e "BACKEND_PORT=5002"
